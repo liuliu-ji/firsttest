@@ -110,6 +110,54 @@ h1 {
   font-weight: 600;
 }
 
+.replace-light {
+  background: #e8f2ec;
+  color: #185c37;
+  border: 0;
+}
+
+.market-import {
+  padding: 12px 16px 4px;
+  border-bottom: 1px solid #e4ebe6;
+}
+
+.market-import p {
+  margin: 6px 0 10px;
+  color: #52606d;
+  font-size: 14px;
+}
+
+.market-import a {
+  color: #217346;
+  font-weight: 600;
+}
+
+.market-import textarea {
+  width: 100%;
+  min-height: 72px;
+  margin-top: 8px;
+  border: 1px solid #dce6e0;
+  border-radius: 8px;
+  padding: 8px 10px;
+  resize: vertical;
+}
+
+.market-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.chip-link {
+  background: #217346;
+  color: #fff !important;
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-size: 12px;
+  text-decoration: none;
+}
+
 .filters {
   display: grid;
   grid-template-columns: 1.4fr repeat(5, minmax(0, 1fr));

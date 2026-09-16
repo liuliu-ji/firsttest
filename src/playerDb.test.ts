@@ -126,6 +126,7 @@ describe("parsePlayerDatabase", () => {
         starsOnly: false,
         freeAgentsOnly: false,
         unauthorizedOnly: false,
+        market: "",
       }, "friendlyScore").map((p) => p.chineseName),
     ).toEqual(["梅西"]);
     expect(
@@ -138,6 +139,7 @@ describe("parsePlayerDatabase", () => {
         starsOnly: false,
         freeAgentsOnly: false,
         unauthorizedOnly: false,
+        market: "",
       }, "overall").map((p) => p.chineseName),
     ).toEqual(["哈兰德"]);
     expect(
@@ -150,6 +152,7 @@ describe("parsePlayerDatabase", () => {
         starsOnly: false,
         freeAgentsOnly: true,
         unauthorizedOnly: false,
+        market: "",
       }, "chineseName").map((p) => p.chineseName),
     ).toEqual(["梅西"]);
   });

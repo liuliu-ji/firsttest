@@ -123,6 +123,16 @@ export type Player = {
   stats: PlayerStats;
   skills: string[];
   unauthorized: boolean;
+  marketPosts: {
+    kind: "listing" | "renewal" | "release" | "unknown";
+    title: string;
+    url: string;
+    author: string;
+    postedAt: string;
+    price: string;
+    years: string;
+    tid: string;
+  }[];
 };
 
 export type PlayerDatabase = {
@@ -140,6 +150,7 @@ export type PlayerFilters = {
   starsOnly: boolean;
   freeAgentsOnly: boolean;
   unauthorizedOnly: boolean;
+  market: "" | "listing" | "renewal" | "release" | "onMarket";
 };
 
 export const EMPTY_FILTERS: PlayerFilters = {
@@ -151,6 +162,7 @@ export const EMPTY_FILTERS: PlayerFilters = {
   starsOnly: false,
   freeAgentsOnly: false,
   unauthorizedOnly: false,
+  market: "",
 };
 
 export type SortKey = "friendlyScore" | "overall" | "potential" | "age" | "chineseName";
@@ -300,6 +312,7 @@ export function parsePlayerDatabase(
       stats,
       skills,
       unauthorized: unauthorizedIds.has(id),
+      marketPosts: [],
     });
   }
 
@@ -332,6 +345,14 @@ export function filterPlayers(
     if (filters.starsOnly && !player.isStar) return false;
     if (filters.freeAgentsOnly && !isFreeAgent(player)) return false;
     if (filters.unauthorizedOnly && !player.unauthorized) return false;
+    if (filters.market) {
+      const posts = player.marketPosts ?? [];
+      if (filters.market === "onMarket") {
+        if (!posts.some((post) => post.kind === "listing" || post.kind === "renewal")) return false;
+      } else if (!posts.some((post) => post.kind === filters.market)) {
+        return false;
+      }
+    }
     if (!query) return true;
     return (
       player.chineseName.toLowerCase().includes(query) ||

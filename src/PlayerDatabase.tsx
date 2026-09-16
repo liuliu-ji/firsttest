@@ -11,6 +11,15 @@ import {
   type SortKey,
 } from "./playerDb";
 import { CONDITION_GUIDE, SKILL_GUIDE } from "./skillGuide";
+import {
+  KIND_LABEL,
+  buildCatalog,
+  parseMarketHtml,
+  parseMarketText,
+  type MarketFile,
+  type MarketKind,
+  type MarketPost,
+} from "./market";
 
 const PAGE_SIZE = 40;
 
@@ -53,6 +62,11 @@ function PlayerDetail({
           <span>{player.foot}</span>
           <span>伤耐 {player.injury || "-"}</span>
           {player.unauthorized && <span className="warn">无授权</span>}
+          {(player.marketPosts ?? []).map((post) => (
+            <a key={`${post.tid}-${post.title}`} className="chip-link" href={post.url} target="_blank" rel="noreferrer">
+              {KIND_LABEL[post.kind as MarketKind] || "论坛"}
+            </a>
+          ))}
         </div>
         <dl className="kv">
           <div><dt>能力 / 潜力</dt><dd>{player.overall} / {player.potential}</dd></div>
@@ -88,11 +102,15 @@ function PlayerDetail({
 
 export default function PlayerDatabaseView({
   database,
+  market,
   onReplace,
+  onImportMarket,
   busy,
 }: {
   database: PlayerDatabase;
+  market: MarketFile | null;
   onReplace: (file: File) => void;
+  onImportMarket: (posts: MarketPost[]) => void;
   busy: boolean;
 }) {
   const [filters, setFilters] = useState<PlayerFilters>(EMPTY_FILTERS);
@@ -100,6 +118,14 @@ export default function PlayerDatabaseView({
   const [page, setPage] = useState(0);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [guideOpen, setGuideOpen] = useState(false);
+  const [paste, setPaste] = useState("");
+  const [importKind, setImportKind] = useState<MarketKind>("listing");
+
+  const catalog = useMemo(() => buildCatalog(database.players), [database]);
+  const unmatched = useMemo(
+    () => (market?.posts ?? []).filter((post) => !post.playerId),
+    [market],
+  );
 
   const positions = useMemo(
     () => uniqueSorted(database.players.map((p) => p.registeredPosition)),
@@ -132,13 +158,27 @@ export default function PlayerDatabaseView({
     setPage(0);
   };
 
+  const importText = (raw: string, kind: MarketKind, board: string) => {
+    const posts = raw.includes("<") && raw.includes("href")
+      ? parseMarketHtml(raw, { kind, board, catalog })
+      : parseMarketText(raw, { kind, board, catalog });
+    onImportMarket(posts);
+  };
+
+  const listedCount = database.players.filter((player) =>
+    (player.marketPosts ?? []).some((post) => post.kind === "listing"),
+  ).length;
+  const renewalCount = database.players.filter((player) =>
+    (player.marketPosts ?? []).some((post) => post.kind === "renewal"),
+  ).length;
+
   return (
     <section className="db">
       <div className="toolbar">
         <div>
           <h2>121届友好联赛球员库</h2>
           <p>
-            {database.sourceFile} · {database.players.length} 人 · 球星 {database.players.filter((p) => p.isStar).length} ·
+            {database.sourceFile} · {database.players.length} 人 · 挂牌 {listedCount} · 续约 {renewalCount} ·
             无授权 {database.unauthorizedIds.length}
           </p>
         </div>
@@ -156,6 +196,65 @@ export default function PlayerDatabaseView({
             }}
           />
         </label>
+      </div>
+
+      <div className="market-import">
+        <strong>bbs.yhpes.com 挂牌 / 续约</strong>
+        {market?.ok ? (
+          <p>已导入 {market.posts.length} 条论坛帖，可按下方「市场」筛选。</p>
+        ) : (
+          <p>
+            {market?.error || "当前云环境连不上论坛服务器。"}
+            请打开
+            {" "}
+            <a href="https://bbs.yhpes.com/forum.php?mod=forumdisplay&fid=39" target="_blank" rel="noreferrer">挂牌区</a>
+            {" / "}
+            <a href="https://bbs.yhpes.com/forum.php?mod=forumdisplay&fid=38" target="_blank" rel="noreferrer">续约区</a>
+            ，把页面另存为 HTML 上传，或把帖子标题粘贴进来。
+          </p>
+        )}
+        <div className="market-actions">
+          <select value={importKind} onChange={(event) => setImportKind(event.target.value as MarketKind)}>
+            <option value="listing">导入为挂牌</option>
+            <option value="renewal">导入为续约</option>
+            <option value="release">导入为解约</option>
+          </select>
+          <label className="replace replace-light">
+            上传 HTML
+            <input
+              className="file-input"
+              type="file"
+              accept=".html,.htm,.txt"
+              multiple
+              onChange={async (event) => {
+                const files = [...(event.target.files ?? [])];
+                const texts = await Promise.all(files.map((file) => file.text()));
+                importText(texts.join("\n"), importKind, files.map((file) => file.name).join(","));
+                event.target.value = "";
+              }}
+            />
+          </label>
+          <button
+            type="button"
+            className="replace replace-light"
+            onClick={() => {
+              if (paste.trim()) {
+                importText(paste, importKind, "粘贴");
+                setPaste("");
+              }
+            }}
+          >
+            导入粘贴
+          </button>
+        </div>
+        <textarea
+          value={paste}
+          onChange={(event) => setPaste(event.target.value)}
+          placeholder="每行一条，例如：【挂牌】小兵-纽卡斯尔联 哈兰德 3853 底价20M"
+        />
+        {unmatched.length > 0 && (
+          <p className="muted">有 {unmatched.length} 条没对上球员库，可把标题改成「中文名 + 球员ID」后再导入。</p>
+        )}
       </div>
 
       <div className="filters">
@@ -188,6 +287,13 @@ export default function PlayerDatabaseView({
           {nations.map((item) => (
             <option key={item} value={item}>{item}</option>
           ))}
+        </select>
+        <select value={filters.market} onChange={(event) => patch({ market: event.target.value as PlayerFilters["market"] })}>
+          <option value="">市场不限</option>
+          <option value="onMarket">挂牌或续约</option>
+          <option value="listing">仅挂牌</option>
+          <option value="renewal">仅续约</option>
+          <option value="release">仅解约</option>
         </select>
         <select value={sortKey} onChange={(event) => setSortKey(event.target.value as SortKey)}>
           <option value="friendlyScore">友好评分</option>
@@ -249,6 +355,7 @@ export default function PlayerDatabaseView({
               <th>能力</th>
               <th>评分</th>
               <th>俱乐部</th>
+              <th>市场</th>
               <th>特技</th>
             </tr>
           </thead>
@@ -266,6 +373,12 @@ export default function PlayerDatabaseView({
                 <td>
                   {player.club || "未注册"}
                   {isFreeAgent(player) ? <div className="sub">自由</div> : <div className="sub">{player.contract}</div>}
+                </td>
+                <td>
+                  {(player.marketPosts ?? []).length
+                    ? [...new Set((player.marketPosts ?? []).map((post) => KIND_LABEL[post.kind as MarketKind] || post.kind))].join(" / ")
+                    : "-"}
+                  {(player.marketPosts ?? [])[0]?.price ? <div className="sub">{player.marketPosts![0].price}</div> : null}
                 </td>
                 <td>{player.skills.slice(0, 3).join("、") || "-"}{player.skills.length > 3 ? "…" : ""}</td>
               </tr>

@@ -9,7 +9,8 @@
     "preview": "vite preview --host",
     "test": "vitest run",
     "generate:sample": "node scripts/generate-sample.mjs",
-    "generate:players": "node --experimental-strip-types --no-warnings scripts/build-players.ts"
+    "generate:players": "node --experimental-strip-types --no-warnings scripts/build-players.ts",
+    "scrape:yhpes": "node --experimental-strip-types --no-warnings scripts/scrape-yhpes.ts"
   },
   "dependencies": {
     "react": "^19.1.1",

@@ -16,7 +16,12 @@ npm run generate:players
 npm run dev
 ```
 
-打开终端提示的本地地址即可浏览。页面支持更换新的 Excel 数据库。
+导入 bbs.yhpes.com 挂牌区（fid=39）和续约区（fid=38）后，可按「仅挂牌 / 仅续约」筛选。当前云环境通常连不上该论坛，可把版面另存为 HTML 上传，或本地执行：
+
+```bash
+npm run scrape:yhpes
+npm run dev
+```
 
 ```bash
 npm test
