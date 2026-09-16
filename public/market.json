@@ -1,0 +1,7 @@
+{
+  "source": "bbs.yhpes.com",
+  "fetchedAt": "2026-09-16T03:28:00.000Z",
+  "ok": false,
+  "error": "当前云环境访问不到 bbs.yhpes.com（挂牌区 fid=39、续约区 fid=38）。TCP 能连通但论坛不返回页面。请把版面另存为 HTML 上传，或把帖子标题粘贴到网页里。",
+  "posts": []
+}
