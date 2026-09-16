@@ -1,24 +1,22 @@
-# Excel 表格读取
+# 121届友好联赛球员库
 
-支持在浏览器中 **上传并读取 Excel 表格**（`.xlsx` / `.xls` / `.xlsm` / `.csv` / `.ods`），解析全部工作表后在线预览。
+读取仓库中的《121届友好联赛数据库（核对版）》Excel，在浏览器里搜索、筛选并查看球员能力和特技。
 
-## 功能
+## 数据
 
-- 点击选择或拖拽上传表格文件
-- 读取多工作表，底部标签切换
-- 按 Excel 样式展示列标（A、B、C…）和行号
-- 大表仅预览前 1000 行，并显示真实总行数
-- 单文件上限 20MB
+- `data/121届友好联赛数据库(核对版).xlsx`：完整球员库（球员库约 3821 人，另含位置分表和无授权表）
+- `data/pes6 状态影响与能力解析.docx`：PES6 状态 / 特技说明
+- `public/players.json`：给网页用的解析结果
 
 ## 本地运行
 
 ```bash
 npm install
-npm run generate:sample
+npm run generate:players
 npm run dev
 ```
 
-打开终端提示的本地地址，上传 `public/sample.xlsx` 或任意 Excel 文件即可预览。
+打开终端提示的本地地址即可浏览。页面支持更换新的 Excel 数据库。
 
 ```bash
 npm test

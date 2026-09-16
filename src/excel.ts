@@ -80,6 +80,7 @@ export function parseWorkbook(
   data: ArrayBuffer | Uint8Array,
   fileName: string,
   fileSize: number,
+  options: { rowLimit?: number } = {},
 ): WorkbookData {
   if (!isAcceptedFileName(fileName)) {
     throw new Error("仅支持 .xlsx、.xls、.xlsm、.csv、.ods 表格文件");
@@ -120,11 +121,12 @@ export function parseWorkbook(
     const allRows = normalizeMatrix(matrix);
     const totalRows = allRows.length;
     const totalCols = allRows[0]?.length ?? 0;
-    const truncated = totalRows > PREVIEW_ROW_LIMIT;
+    const rowLimit = options.rowLimit ?? PREVIEW_ROW_LIMIT;
+    const truncated = rowLimit > 0 && totalRows > rowLimit;
 
     return {
       name,
-      rows: truncated ? allRows.slice(0, PREVIEW_ROW_LIMIT) : allRows,
+      rows: truncated ? allRows.slice(0, rowLimit) : allRows,
       totalRows,
       totalCols,
       truncated,
@@ -142,7 +144,7 @@ export async function readExcelFile(file: File): Promise<WorkbookData> {
     throw new Error("文件过大，请上传不超过 20MB 的表格");
   }
   const buffer = await file.arrayBuffer();
-  return parseWorkbook(buffer, file.name, file.size);
+  return parseWorkbook(buffer, file.name, file.size, { rowLimit: 0 });
 }
 
 export function formatFileSize(bytes: number): string {
