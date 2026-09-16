@@ -340,13 +340,61 @@ table.players {
 .bar i.good { background: #217346; }
 .bar i.hot { background: #c2410c; }
 
+.tabs {
+  display: flex;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.tab {
+  border: 0;
+  background: #e8f2ec;
+  color: #185c37;
+  padding: 8px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.tab-active {
+  background: #217346;
+  color: #fff;
+  font-weight: 700;
+}
+
+.watch-grid {
+  display: grid;
+  grid-template-columns: 1.2fr 0.8fr;
+  gap: 12px;
+  padding: 0 16px 16px;
+}
+
+.watch-h {
+  margin: 16px 16px 8px;
+  font-size: 16px;
+}
+
+.floors {
+  padding-left: 18px;
+}
+
+.floors li {
+  margin: 10px 0;
+}
+
+.floor-xfq {
+  background: #f4fbf6;
+  border-radius: 8px;
+  padding: 8px;
+}
+
 @media (max-width: 900px) {
   .filters {
     grid-template-columns: 1fr 1fr;
   }
 
   .guide-grid,
-  .kv {
+  .kv,
+  .watch-grid {
     grid-template-columns: 1fr;
   }
 }

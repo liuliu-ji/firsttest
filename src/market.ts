@@ -35,7 +35,7 @@ type Catalog = {
   clubs: string[];
 };
 
-function decodeEntities(value: string): string {
+export function decodeEntities(value: string): string {
   return value
     .replace(/&nbsp;/gi, " ")
     .replace(/&amp;/gi, "&")
@@ -46,11 +46,11 @@ function decodeEntities(value: string): string {
     .replace(/&#(\d+);/g, (_, code) => String.fromCharCode(Number(code)));
 }
 
-function stripTags(html: string): string {
+export function stripTags(html: string): string {
   return decodeEntities(html.replace(/<[^>]+>/g, " ")).replace(/\s+/g, " ").trim();
 }
 
-function inferKind(title: string, fallback: MarketKind = "unknown"): MarketKind {
+export function inferKind(title: string, fallback: MarketKind = "unknown"): MarketKind {
   if (/续约/.test(title)) return "renewal";
   if (/解约|买断|解聘/.test(title)) return "release";
   if (/挂牌|出售|转会|底价|流拍/.test(title)) return "listing";

@@ -1,8 +1,10 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import PlayerDatabaseView from "./PlayerDatabase";
+import WatchDesk from "./WatchDesk";
 import { readExcelFile } from "./excel";
 import { parsePlayerDatabase, type PlayerDatabase } from "./playerDb";
 import { attachMarketToPlayers, type MarketFile, type MarketPost } from "./market";
+import { WATCH_CLUB, mergeWatchThreads, type WatchFile, type WatchThread } from "./watch";
 
 function applyMarket(database: PlayerDatabase, posts: MarketPost[]): PlayerDatabase {
   return {
@@ -11,9 +13,20 @@ function applyMarket(database: PlayerDatabase, posts: MarketPost[]): PlayerDatab
   };
 }
 
+const EMPTY_WATCH: WatchFile = {
+  user: "xfq",
+  club: WATCH_CLUB,
+  fetchedAt: "",
+  ok: false,
+  error: "",
+  threads: [],
+};
+
 export default function App() {
   const [database, setDatabase] = useState<PlayerDatabase | null>(null);
   const [market, setMarket] = useState<MarketFile | null>(null);
+  const [watch, setWatch] = useState<WatchFile>(EMPTY_WATCH);
+  const [tab, setTab] = useState<"players" | "watch">("watch");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(true);
 
@@ -27,15 +40,18 @@ export default function App() {
     let cancelled = false;
     (async () => {
       try {
-        const [playersRes, marketRes] = await Promise.all([
+        const [playersRes, marketRes, watchRes] = await Promise.all([
           fetch("/players.json"),
           fetch("/market.json"),
+          fetch("/watch.json"),
         ]);
         if (!playersRes.ok) throw new Error("默认球员库加载失败");
         const playersJson = (await playersRes.json()) as PlayerDatabase;
         const marketJson = marketRes.ok ? ((await marketRes.json()) as MarketFile) : null;
+        const watchJson = watchRes.ok ? ((await watchRes.json()) as WatchFile) : EMPTY_WATCH;
         if (!cancelled) {
           setMarket(marketJson);
+          setWatch({ ...EMPTY_WATCH, ...watchJson, threads: watchJson.threads ?? [] });
           setDatabase(applyMarket(playersJson, marketJson?.posts ?? []));
           setError(null);
         }
@@ -83,18 +99,41 @@ export default function App() {
     });
   }, []);
 
+  const onImportWatch = useCallback((threads: WatchThread[]) => {
+    setWatch((prev) => ({
+      ...prev,
+      fetchedAt: new Date().toISOString(),
+      ok: threads.length > 0,
+      error: "",
+      threads: mergeWatchThreads(prev.threads, threads),
+    }));
+  }, []);
+
+  const squad = useMemo(
+    () => (database?.players ?? []).filter((player) => player.club === WATCH_CLUB),
+    [database],
+  );
+
   return (
     <div className="page">
       <header className="hero">
         <p className="eyebrow">PES6 · 121届友好联赛</p>
         <h1>球员数据库</h1>
         <p className="lede">
-          已读取《121届友好联赛数据库（核对版）》。导入 bbs.yhpes.com 挂牌/续约后，即可按你的条件筛选。
+          监盘 XFQ（{WATCH_CLUB}）的发帖和跟帖，并对照伯恩利阵容做筛选。
         </p>
+        <div className="tabs">
+          <button type="button" className={tab === "watch" ? "tab tab-active" : "tab"} onClick={() => setTab("watch")}>
+            XFQ 监盘
+          </button>
+          <button type="button" className={tab === "players" ? "tab tab-active" : "tab"} onClick={() => setTab("players")}>
+            球员库
+          </button>
+        </div>
       </header>
       {busy && !database && <p className="status">正在加载球员库…</p>}
       {error && <p className="error" role="alert">{error}</p>}
-      {database && (
+      {database && tab === "players" && (
         <PlayerDatabaseView
           database={database}
           market={market}
@@ -102,6 +141,9 @@ export default function App() {
           onImportMarket={onImportMarket}
           busy={busy}
         />
+      )}
+      {database && tab === "watch" && (
+        <WatchDesk squad={squad} watch={watch} onImport={onImportWatch} />
       )}
     </div>
   );

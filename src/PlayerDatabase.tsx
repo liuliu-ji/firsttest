@@ -11,15 +11,8 @@ import {
   type SortKey,
 } from "./playerDb";
 import { CONDITION_GUIDE, SKILL_GUIDE } from "./skillGuide";
-import {
-  KIND_LABEL,
-  buildCatalog,
-  parseMarketHtml,
-  parseMarketText,
-  type MarketFile,
-  type MarketKind,
-  type MarketPost,
-} from "./market";
+import { KIND_LABEL, buildCatalog, parseMarketHtml, parseMarketText, type MarketFile, type MarketKind, type MarketPost } from "./market";
+import { WATCH_CLUB } from "./watch";
 
 const PAGE_SIZE = 40;
 
@@ -326,6 +319,9 @@ export default function PlayerDatabaseView({
           />
           无授权
         </label>
+        <button type="button" className="linkish" onClick={() => patch({ club: WATCH_CLUB })}>
+          XFQ阵容
+        </button>
         <button type="button" className="linkish" onClick={() => setGuideOpen((open) => !open)}>
           {guideOpen ? "收起能力说明" : "PES6 能力说明"}
         </button>

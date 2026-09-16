@@ -2,6 +2,7 @@ import { writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { YHPES_BOARDS, parseMarketHtml, type MarketFile, type MarketPost } from "../src/market.ts";
+import { WATCH_USER, ingestWatchHtml, parseSpaceHtml, type WatchFile, type WatchThread } from "../src/watch.ts";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const output = join(root, "public", "market.json");
@@ -73,3 +74,37 @@ const result: MarketFile = {
 
 writeFileSync(output, JSON.stringify(result, null, 2));
 console.log(result.ok ? `wrote ${unique.size} posts` : `wrote empty market.json: ${result.error}`);
+
+const watchOut = join(root, "public", "watch.json");
+const watchThreads: WatchThread[] = [];
+if (!unreachable) {
+  const spaceUrls = [
+    `/home.php?mod=space&username=${WATCH_USER}&do=thread&view=me&from=space`,
+    `/home.php?mod=space&username=${WATCH_USER}&do=reply&view=me&from=space`,
+  ];
+  for (const path of spaceUrls) {
+    try {
+      const html = await fetchText(`https://bbs.yhpes.com${path}`);
+      if (/id="postmessage_\d+"/i.test(html)) {
+        watchThreads.push(...ingestWatchHtml(html));
+      } else {
+        watchThreads.push(...parseSpaceHtml(html));
+      }
+    } catch {
+      unreachable = true;
+      break;
+    }
+  }
+}
+const watch: WatchFile = {
+  user: WATCH_USER,
+  club: "xfq-伯恩利",
+  fetchedAt: new Date().toISOString(),
+  ok: watchThreads.length > 0,
+  error: watchThreads.length
+    ? ""
+    : "当前环境访问不到 XFQ 的主题/回复。请导入 HTML 或粘贴楼层。",
+  threads: watchThreads,
+};
+writeFileSync(watchOut, JSON.stringify(watch, null, 2));
+console.log(watch.ok ? `wrote ${watchThreads.length} XFQ threads` : `wrote empty watch.json: ${watch.error}`);
